@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // for local development
+  url      = env("DATABASE_URL")
+  // for Vercel
+  // url       = env("POSTGRES_PRISMA_URL")
+  // directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  role     Role     @default(USER)
+  Profile  Profile? 
+  reviews  Review[] // Relation to Review
+  AttendedJam AttendedJam[]
+}
+
+enum Experience {
+  novice
+  beginner
+  intermediate
+  professional
+}
+
+model JamInformation {
+  id          Int        @id @default(autoincrement())
+  owner       String
+  jamName     String
+  image       String
+  organizer   String
+  genre       String
+  location    String
+  date        DateTime
+  instruments String
+  experience  Experience
+  description String
+
+  AttendedJam AttendedJam[]
+}
+
+model AttendedJam {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jamId     Int
+  user      User     @relation(fields: [userId], references: [id])
+  jam       JamInformation @relation(fields: [jamId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jamId]) // Ensure a user can only attend a jam once
+}
+
+
+model Goals {
+  id        Int    @id @default(autoincrement())
+  goal      String
+  isEditing Int    @default(0)
+}
+
+model Profile {
+  id            Int        @id @default(autoincrement())
+  userId        Int        @unique
+  user          User       @relation(fields: [userId], references: [id])
+  firstName     String
+  lastName      String
+  username      String     @unique
+  image         String?
+  rating        Int
+  musicalGoals  String?
+  musicalTastes String?
+  instruments   String?
+  experience    Experience
+  description   String?
+  reviews       Review[] // Relation to Review
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int      
+  comment   String
+  profile   Profile  @relation(fields: [profileId], references: [id]) // Relation to Profile
+  profileId Int
+  user      User     @relation(fields: [userId], references: [id]) // Relation to User
+  userId    Int
+  createdAt DateTime @default(now()) // Automatically set creation date
+}
+
+model Experiences {
+  id            Int    @id @default(autoincrement())
+  level         String
+  description   String
+  isEditing     Int    @default(0)
+}
+
+model Tastes {
+  id            Int    @id @default(autoincrement())
+  genre         String
+  isEditing     Int    @default(0)
+}
